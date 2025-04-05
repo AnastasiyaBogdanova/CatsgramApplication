@@ -1,7 +1,7 @@
 package ru.yandex.practicum.catsgram.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.catsgram.exception.ParameterNotValidException;
 import ru.yandex.practicum.catsgram.model.Post;
 import ru.yandex.practicum.catsgram.service.PostService;
 
@@ -17,8 +17,24 @@ public class PostController {
     }
 
     @GetMapping
-    public Collection<Post> findAll() {
-        return postService.findAll();
+    public Collection<Post> findAll(
+            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        SortOrder sortOrder = SortOrder.from(sort);
+        if (sortOrder == null) {
+            throw new ParameterNotValidException("sort", new Throwable(), "sort", "Получено: " + sort + " должно быть: ask или desc");
+        }
+        if (size <= 0) {
+            throw new ParameterNotValidException("size", new Throwable(), "size", "Размер должен быть больше нуля");
+        }
+
+        if (from < 0) {
+            throw new ParameterNotValidException("from", new Throwable(), "from", "Начало выборки должно быть положительным числом");
+        }
+
+        return postService.findAll(from, size, sortOrder);
     }
 
     @PostMapping
@@ -30,4 +46,5 @@ public class PostController {
     public Post update(@RequestBody Post newPost) {
         return postService.update(newPost);
     }
+
 }
