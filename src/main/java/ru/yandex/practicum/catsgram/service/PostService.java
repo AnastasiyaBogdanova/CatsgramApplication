@@ -1,17 +1,15 @@
 package ru.yandex.practicum.catsgram.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.catsgram.controller.SortOrder;
 import ru.yandex.practicum.catsgram.exception.ConditionsNotMetException;
 import ru.yandex.practicum.catsgram.exception.NotFoundException;
 import ru.yandex.practicum.catsgram.model.Post;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 // Указываем, что класс PostService - является бином и его
 // нужно добавить в контекст приложения
@@ -20,8 +18,19 @@ import java.util.Map;
 public class PostService {
     private final Map<Long, Post> posts = new HashMap<>();
     private final UserService userService;
-    public Collection<Post> findAll() {
-        return posts.values();
+    public Collection<Post> findAll(int from, int size, ru.yandex.practicum.catsgram.controller.SortOrder sort) {
+        List<Post> sortedPosts = new ArrayList<>(posts.values());
+
+        Comparator<Post> comparator = Comparator.comparing(Post::getPostDate);
+        if (sort == SortOrder.DESCENDING) {
+            comparator = comparator.reversed();
+        }
+        sortedPosts.sort(comparator);
+
+        return sortedPosts.stream()
+                .skip(from)
+                .limit(size)
+                .collect(Collectors.toList());
     }
 
     public Post create(Post post) {
